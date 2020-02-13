@@ -72,7 +72,7 @@ DataTable::SlotIterator &DataTable::SlotIterator::operator++() {
 }
 
 DataTable::SlotIterator DataTable::end() const {  // NOLINT for STL name compability
-  common::SpinLatch::ScopedSpinLatch guard(&blocks_latch_);
+//  common::SpinLatch::ScopedSpinLatch guard(&blocks_latch_);
   // TODO(Tianyu): Need to look in detail at how this interacts with compaction when that gets in.
 
   // The end iterator could either point to an unfilled slot in a block, or point to nothing if every block in the
