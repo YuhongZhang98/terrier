@@ -61,12 +61,12 @@ void DataTable::Scan(const common::ManagedPointer<transaction::TransactionContex
 DataTable::SlotIterator &DataTable::SlotIterator::operator++() {
 //  common::SpinLatch::ScopedSpinLatch guard(&table_->blocks_latch_);
   // Jump to the next block if already the last slot in the block.
-  if (current_slot_.GetOffset() != table_->accessor_.GetBlockLayout().NumSlots() - 1) {
-    current_slot_ = {*block_, current_slot_.GetOffset() + 1};
-  } else {
+  if (current_slot_.GetOffset() == table_->accessor_.GetBlockLayout().NumSlots() - 1) {
     ++block_;
     // Cannot dereference if the next block is end(), so just use nullptr to denote
     current_slot_ = {block_ == table_->blocks_.end() ? nullptr : *block_, 0};
+  } else {
+    current_slot_ = {*block_, current_slot_.GetOffset() + 1};
   }
   return *this;
 }
@@ -78,12 +78,11 @@ DataTable::SlotIterator DataTable::end() const {  // NOLINT for STL name compabi
   // The end iterator could either point to an unfilled slot in a block, or point to nothing if every block in the
   // table is full. In the case that it points to nothing, we will use the end-iterator of the blocks list and
   // 0 to denote that this is the case. This solution makes increment logic simple and natural.
-  auto blocks_end = blocks_.end();
-  if (blocks_.empty()) return {this, blocks_end, 0};
-  auto last_block = --blocks_end;
+  if (blocks_.empty()) return {this, blocks_.end(), 0};
+  auto last_block = --blocks_.end();
   uint32_t insert_head = (*last_block)->GetInsertHead();
   // Last block is full, return the default end iterator that doesn't point to anything
-  if (insert_head == accessor_.GetBlockLayout().NumSlots()) return {this, blocks_end, 0};
+  if (insert_head == accessor_.GetBlockLayout().NumSlots()) return {this, blocks_.end(), 0};
   // Otherwise, insert head points to the slot that will be inserted next, which would be exactly what we want.
   return {this, last_block, insert_head};
 }
